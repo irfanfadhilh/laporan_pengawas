@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS laporan (
+  id SERIAL PRIMARY KEY,
+  data JSONB NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);

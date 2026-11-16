@@ -1,0 +1,884 @@
+<!doctype html>
+<html lang="id"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f4c45">
+<title>Laporan Kegiatan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{
+  fontFamily:{sans:['"Plus Jakarta Sans"','system-ui','sans-serif']},
+  colors:{
+    brand:{50:'#eef7f5',100:'#d5ece7',200:'#a9d8cf',300:'#74bdb0',500:'#1f8a7a',600:'#14705f',700:'#0f5a4e',800:'#0f4c45',900:'#0c3833'},
+    paper:'#f6f4ee', ink:'#1c2321', accent:'#d9822b'
+  },
+  boxShadow:{card:'0 1px 2px rgba(16,24,22,.05),0 4px 16px -6px rgba(16,24,22,.10)'}
+}}};
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+<style>
+[x-cloak]{display:none!important}
+body{-webkit-tap-highlight-color:transparent}
+/* ---- Dokumen cetak (A4) ---- */
+/* margin 0 = browser tidak punya ruang untuk header/footer (tanggal, judul, URL, nomor halaman) */
+@page{size:A4;margin:0}
+#doc .pg{width:100%;border-collapse:collapse}
+#doc .pg>thead,#doc .pg>tfoot{display:none}
+#doc .pg>tbody>tr>td{padding:0}
+#doc .pg-sp{height:10mm}
+#doc{width:210mm;min-height:297mm;padding:10mm 14mm 10mm 18mm;background:#fff;color:#000;
+  font-family:"Times New Roman",Times,serif;font-size:11pt;line-height:1.25;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+#doc h1{font-family:Calibri,Carlito,"Segoe UI",Arial,sans-serif;font-size:18pt;font-weight:400;text-align:center;letter-spacing:.3pt;margin:0 0 6pt}
+#doc .lap{width:100%;border-collapse:collapse;table-layout:fixed}
+#doc .lap>tbody>tr{break-inside:avoid;page-break-inside:avoid}
+#doc .lap>tbody>tr>td{border:1px solid #000;padding:2pt 5pt;vertical-align:top;word-wrap:break-word}
+#doc .lap>tbody>tr>td.c{text-align:center;padding-left:0;padding-right:0}
+#doc .opts{display:flex;flex-wrap:wrap;column-gap:9pt;row-gap:1pt}
+#doc .opts>span{white-space:nowrap}
+#doc .bx{font-family:"Segoe UI Symbol","DejaVu Sans","MS Gothic",sans-serif;font-size:10pt}
+#doc .pre{white-space:pre-wrap;min-height:1.35em}
+#doc .foto{width:100%;border-collapse:collapse;table-layout:fixed;margin:2pt 0}
+#doc .foto td{border:1px solid #000;padding:3pt;text-align:center;vertical-align:top}
+#doc .foto img{display:block;width:100%;height:3.6cm;object-fit:cover}
+#doc .foto .cap{font-size:9pt;margin-top:2pt}
+#doc .foto td.kosong{height:2.6cm}
+#doc .ttd{text-align:center;padding:3pt 5pt 5pt}
+#doc .ttd-img{height:1.8cm;display:flex;align-items:center;justify-content:center}
+#doc .ttd-img img{max-height:1.75cm;max-width:55%}
+#doc .nama{font-weight:700;text-decoration:underline;text-underline-offset:2pt}
+@media print{
+  .no-print{display:none!important}
+  body{background:#fff!important}
+  main{padding:0!important}
+  #wrap{overflow:visible!important;padding:0!important;height:auto!important}
+  #doc{width:auto;min-height:0;padding:0 14mm 0 18mm;box-shadow:none!important;margin:0!important;transform:none!important}
+  /* baris kosong yang berulang di tiap halaman = margin atas/bawah */
+  #doc .pg>thead{display:table-header-group}
+  #doc .pg>tfoot{display:table-footer-group}
+}
+canvas{touch-action:none}
+.field{width:100%;margin-top:.375rem;border:1px solid #dcd8cd;background:#fff;border-radius:.75rem;padding:.625rem .75rem;font-size:.95rem;transition:border-color .15s,box-shadow .15s}
+.field:focus{outline:none;border-color:#1f8a7a;box-shadow:0 0 0 3px rgba(31,138,122,.18)}
+.lbl{display:block;font-size:.8rem;font-weight:600;color:#4b5552}
+.skel{background:linear-gradient(90deg,#ebe8df 25%,#f3f1ea 50%,#ebe8df 75%);background-size:200% 100%;animation:sk 1.2s infinite}
+@keyframes sk{to{background-position:-200% 0}}
+.fade-in{animation:fi .25s ease-out}
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.safe-b{padding-bottom:max(.75rem,env(safe-area-inset-bottom))}
+</style></head>
+<body class="bg-paper text-ink font-sans antialiased" x-data="app()">
+
+<!-- ============ DAFTAR ============ -->
+<main x-show="view=='list'" x-cloak class="no-print pb-28 lg:pb-12">
+  <!-- Header: HP = ringkas, PC = bar lebar dengan tombol aksi -->
+  <header class="bg-brand-800 text-white sm:rounded-b-3xl lg:rounded-none">
+    <div class="max-w-2xl lg:max-w-6xl mx-auto px-4 lg:px-8 pt-6 pb-16 lg:pt-8 lg:pb-20 lg:flex lg:items-end lg:justify-between lg:gap-8">
+      <div>
+        <p class="text-brand-200 text-xs font-semibold tracking-widest uppercase">Pengawas Sekolah · 2026</p>
+        <h1 class="text-2xl lg:text-3xl font-extrabold mt-1">Laporan Kegiatan</h1>
+        <p class="hidden lg:block text-sm text-brand-100 mt-1">Pilih tanggal di kalender untuk melihat laporan pada hari itu.</p>
+      </div>
+      <div class="flex items-end gap-3 mt-5 lg:mt-0">
+        <div class="grid grid-cols-3 gap-2 flex-1 lg:flex-none lg:w-[26rem]">
+          <div class="bg-white/10 rounded-2xl px-3 py-2.5">
+            <div class="text-2xl font-bold" x-text="items.length"></div><div class="text-[11px] text-brand-100">Total laporan</div></div>
+          <div class="bg-white/10 rounded-2xl px-3 py-2.5">
+            <div class="text-2xl font-bold" x-text="countMonth(todayKey.slice(0,7))"></div><div class="text-[11px] text-brand-100">Bulan ini</div></div>
+          <div class="bg-white/10 rounded-2xl px-3 py-2.5">
+            <div class="text-2xl font-bold" x-text="Object.keys(byDate).length"></div><div class="text-[11px] text-brand-100">Hari kegiatan</div></div>
+        </div>
+        <button @click="baru(mode=='kalender'?sel:'')" class="hidden lg:flex bg-accent hover:brightness-110 text-white rounded-2xl shadow-lg shadow-black/20 px-5 h-[4.25rem] font-bold items-center gap-2 transition" title="Laporan baru (N)">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Laporan Baru</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-2xl lg:max-w-6xl mx-auto px-4 lg:px-8 -mt-10 lg:-mt-12 lg:grid lg:grid-cols-[360px_1fr] lg:gap-6 lg:items-start space-y-4 lg:space-y-0">
+
+    <!-- Tab (HP saja) -->
+    <div class="lg:hidden bg-white rounded-2xl shadow-card p-1 grid grid-cols-2 text-sm font-semibold">
+      <button @click="setMode('kalender')" :class="mode=='kalender'?'bg-brand-700 text-white':'text-slate-600'" class="rounded-xl py-2.5 flex items-center justify-center gap-2 transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Per Tanggal</button>
+      <button @click="setMode('semua')" :class="mode=='semua'?'bg-brand-700 text-white':'text-slate-600'" class="rounded-xl py-2.5 flex items-center justify-center gap-2 transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Semua Laporan</button>
+    </div>
+
+    <!-- ===== KOLOM KIRI: KALENDER (HP: hanya di tab Per Tanggal; PC: selalu tampil) ===== -->
+    <aside x-show="!loading && (isDesk || mode=='kalender')" class="space-y-4 lg:sticky lg:top-4">
+      <div class="bg-white rounded-2xl shadow-card p-4">
+        <div class="flex items-center justify-between mb-3">
+          <button @click="shift(-1)" class="w-9 h-9 rounded-full hover:bg-slate-100 grid place-items-center" aria-label="Bulan sebelumnya" title="Bulan sebelumnya (←)">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
+          <div class="text-center">
+            <div class="font-bold text-lg" x-text="monthName"></div>
+            <div class="text-xs text-slate-500" x-text="countMonth(cy+'-'+pad2(cm+1))+' laporan'"></div>
+          </div>
+          <button @click="shift(1)" class="w-9 h-9 rounded-full hover:bg-slate-100 grid place-items-center" aria-label="Bulan berikutnya" title="Bulan berikutnya (→)">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button>
+        </div>
+        <div class="grid grid-cols-7 text-center text-[11px] font-semibold text-slate-400 mb-1">
+          <template x-for="d in ['Sen','Sel','Rab','Kam','Jum','Sab','Min']"><div x-text="d"></div></template>
+        </div>
+        <div class="grid grid-cols-7 gap-1">
+          <template x-for="(c,i) in cells" :key="i">
+            <div>
+              <template x-if="c">
+                <button @click="pick(c);mode='kalender'" class="relative w-full aspect-square rounded-xl text-sm font-medium flex flex-col items-center justify-center transition"
+                  :title="byDate[c] ? byDate[c].map(x=>x.tempat||'(tanpa tempat)').join('\n') : ''"
+                  :class="sel==c && mode=='kalender' ? 'bg-brand-700 text-white shadow' : (byDate[c] ? 'bg-brand-50 text-brand-800 hover:bg-brand-100' : 'hover:bg-slate-100 text-slate-700')">
+                  <span x-text="+c.slice(8)" :class="c==todayKey && !(sel==c && mode=='kalender') ? 'text-accent font-extrabold' : ''"></span>
+                  <span x-show="byDate[c]" class="text-[9px] leading-none mt-0.5 font-bold" :class="sel==c && mode=='kalender'?'text-brand-100':'text-brand-600'"
+                    x-text="byDate[c] ? byDate[c].length+' lap' : ''"></span>
+                </button>
+              </template>
+            </div>
+          </template>
+        </div>
+        <div class="flex items-center gap-2 mt-4 pt-3 border-t border-slate-100">
+          <input type="date" :value="sel" @change="$event.target.value && (pick($event.target.value),mode='kalender')" class="field !mt-0 flex-1 !py-2 text-sm">
+          <button @click="pick(todayKey);mode='kalender'" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-sm font-semibold whitespace-nowrap">Hari ini</button>
+        </div>
+      </div>
+
+      <!-- PC: daftar hari kegiatan bulan ini -->
+      <div class="hidden lg:block bg-white rounded-2xl shadow-card p-4">
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Hari kegiatan bulan ini</div>
+        <template x-for="d in monthDays" :key="d">
+          <button @click="pick(d);mode='kalender'" class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-sm text-left transition"
+            :class="sel==d && mode=='kalender' ? 'bg-brand-50 text-brand-800 font-semibold' : 'hover:bg-slate-50'">
+            <span x-text="tglPendek(d)"></span>
+            <span class="text-xs font-semibold text-brand-700" x-text="byDate[d].length+' laporan'"></span>
+          </button>
+        </template>
+        <p x-show="!monthDays.length" class="text-sm text-slate-400 px-1">Belum ada kegiatan di bulan ini.</p>
+        <p class="text-[11px] text-slate-400 mt-3 pt-3 border-t border-slate-100">Pintasan: <kbd class="px-1 rounded bg-slate-100">N</kbd> laporan baru · <kbd class="px-1 rounded bg-slate-100">←</kbd><kbd class="px-1 rounded bg-slate-100">→</kbd> ganti bulan · <kbd class="px-1 rounded bg-slate-100">/</kbd> cari</p>
+      </div>
+    </aside>
+
+    <!-- ===== KOLOM KANAN: DAFTAR LAPORAN ===== -->
+    <section class="flex flex-col gap-4 min-w-0">
+      <template x-if="loading">
+        <div class="space-y-3"><div class="skel h-72 lg:h-28 rounded-2xl"></div><div class="skel h-24 rounded-2xl"></div></div>
+      </template>
+      <template x-if="err">
+        <div class="bg-red-50 border border-red-200 text-red-800 rounded-2xl p-4 text-sm">
+          Gagal memuat data: <span x-text="err"></span>
+          <button @click="load()" class="ml-2 font-semibold underline">Coba lagi</button></div>
+      </template>
+
+      <!-- Kepala panel -->
+      <div x-show="!loading" class="lg:bg-white lg:rounded-2xl lg:shadow-card lg:p-4 space-y-3">
+        <div class="hidden lg:flex items-center gap-3">
+          <div class="bg-slate-100 rounded-xl p-1 flex text-sm font-semibold">
+            <button @click="setMode('kalender')" :class="mode=='kalender'?'bg-white shadow text-brand-800':'text-slate-500 hover:text-slate-700'" class="rounded-lg px-3 py-1.5 transition">Tanggal dipilih</button>
+            <button @click="setMode('semua')" :class="mode=='semua'?'bg-white shadow text-brand-800':'text-slate-500 hover:text-slate-700'" class="rounded-lg px-3 py-1.5 transition">Semua laporan</button>
+          </div>
+          <div class="flex-1"></div>
+          <span class="text-xs font-semibold text-slate-500" x-text="shownCount+' laporan'"></span>
+        </div>
+        <div x-show="mode=='kalender'" class="flex items-end justify-between px-1 lg:px-0">
+          <div>
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Laporan tanggal</div>
+            <div class="font-bold lg:text-xl" x-text="tgl(sel)"></div>
+          </div>
+          <span class="lg:hidden text-xs font-semibold bg-white shadow-card rounded-full px-2.5 py-1" x-text="shownCount+' laporan'"></span>
+          <button x-show="shownCount" @click="baru(sel)" class="hidden lg:block text-sm font-semibold text-brand-700 hover:underline">+ Tambah di tanggal ini</button>
+        </div>
+        <div x-show="mode=='semua'" class="relative">
+          <svg class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input x-ref="cari" x-model="q" placeholder="Cari tempat, jenis kegiatan, sasaran…" class="field !mt-0 !pl-10 shadow-card lg:shadow-none !border-transparent lg:!border-slate-200">
+        </div>
+      </div>
+
+      <!-- Isi -->
+      <template x-for="g in shown" :key="g.key">
+        <div>
+          <button x-show="mode=='semua'" @click="g.key!='-'&&(pick(g.key),mode='kalender')" class="sticky top-0 z-10 w-full text-left bg-paper/95 backdrop-blur py-2 px-1 flex items-center justify-between hover:text-brand-700">
+            <span class="font-bold text-sm" x-text="g.key=='-' ? 'Tanpa tanggal' : tgl(g.key)"></span>
+            <span class="text-xs text-slate-500" x-text="g.list.length+' laporan'"></span>
+          </button>
+          <template x-for="i in g.list" :key="i.id">
+            <article class="fade-in group bg-white rounded-2xl shadow-card p-4 mb-3 lg:flex lg:items-center lg:gap-4 lg:hover:ring-2 lg:hover:ring-brand-200 transition">
+              <div class="flex-1 min-w-0 lg:cursor-pointer" x-html="card(i)" @click="isDesk && buka(i.id,'preview')"></div>
+              <div class="flex gap-2 mt-4 lg:mt-0 lg:shrink-0">
+                <button @click="buka(i.id,'preview')" class="flex-1 lg:flex-none px-4 py-2 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-sm font-semibold">Lihat / PDF</button>
+                <button @click="buka(i.id,'form')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-sm font-semibold">Edit</button>
+                <button @click="duplikat(i.id)" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-sm font-semibold" title="Duplikat laporan">Salin</button>
+                <button @click="hapus(i)" class="px-3 py-2 rounded-xl text-red-700 hover:bg-red-50 text-sm font-semibold" aria-label="Hapus" title="Hapus">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+              </div>
+            </article>
+          </template>
+        </div>
+      </template>
+
+      <!-- Kosong -->
+      <div x-show="!loading && !shownCount" class="bg-white/70 border-2 border-dashed border-slate-300 rounded-2xl p-6 lg:p-10 text-center">
+        <template x-if="mode=='kalender'"><div>
+          <p class="text-slate-500 text-sm">Belum ada laporan pada tanggal ini.</p>
+          <button @click="baru(sel)" class="mt-3 px-4 py-2 rounded-xl bg-brand-700 text-white text-sm font-semibold">+ Buat laporan untuk tanggal ini</button>
+        </div></template>
+        <template x-if="mode=='semua'">
+          <p class="text-slate-500 text-sm" x-text="q ? 'Tidak ada laporan yang cocok dengan pencarian.' : 'Belum ada laporan. Tekan tombol Laporan Baru untuk membuat.'"></p>
+        </template>
+      </div>
+    </section>
+  </div>
+
+  <!-- Tombol melayang (HP saja) -->
+  <button @click="baru(mode=='kalender'?sel:'')" class="lg:hidden fixed bottom-6 right-5 sm:right-[calc(50%-20rem)] bg-accent hover:brightness-105 text-white rounded-2xl shadow-lg shadow-orange-900/20 pl-4 pr-5 py-3.5 font-bold flex items-center gap-2">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Laporan Baru</button>
+</main>
+
+<!-- ============ FORM ============ -->
+<main x-show="view=='form'" x-cloak class="no-print pb-32 lg:pb-12">
+  <header class="sticky top-0 z-20 bg-paper/95 backdrop-blur border-b border-slate-200">
+   <div class="max-w-2xl lg:max-w-6xl mx-auto px-4 lg:px-8 py-3 flex items-center gap-3">
+    <button @click="batal()" class="w-9 h-9 rounded-full hover:bg-slate-200 grid place-items-center" aria-label="Kembali">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
+    <div class="flex-1 min-w-0">
+      <h1 class="font-bold leading-tight" x-text="f.id ? 'Edit Laporan' : 'Laporan Baru'"></h1>
+      <div class="text-xs text-slate-500 truncate" x-text="f.tanggal ? tgl(f.tanggal) : 'Tanggal belum diisi'"></div>
+    </div>
+    <div class="text-right">
+      <div class="text-xs font-bold text-brand-700" x-text="progress+'%'"></div>
+      <div class="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden"><div class="h-full bg-brand-500 transition-all" :style="'width:'+progress+'%'"></div></div>
+    </div>
+    <button @click="simpan(true)" :disabled="busy" class="hidden lg:block ml-2 px-5 py-2.5 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-sm font-bold disabled:opacity-50"
+      x-text="busy ? 'Menyimpan…' : 'Simpan & Pratinjau'"></button>
+   </div>
+  </header>
+
+  <div class="max-w-2xl lg:max-w-6xl mx-auto px-4 lg:px-8 pt-4 lg:pt-6 lg:grid lg:grid-cols-[230px_1fr] lg:gap-8 lg:items-start">
+   <!-- PC: navigasi bagian -->
+   <nav class="hidden lg:block sticky top-24 space-y-4">
+    <div class="bg-white rounded-2xl shadow-card p-2">
+      <template x-for="s in steps" :key="s.n">
+        <a :href="'#sec'+s.n" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm hover:bg-slate-50">
+          <span class="w-6 h-6 rounded-full text-xs grid place-items-center font-bold shrink-0"
+            :class="s.done ? 'bg-brand-700 text-white' : 'bg-slate-100 text-slate-500'">
+            <span x-show="!s.done" x-text="s.n"></span>
+            <svg x-show="s.done" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg>
+          </span>
+          <span class="font-medium" :class="s.done ? 'text-ink' : 'text-slate-500'" x-text="s.label"></span>
+        </a>
+      </template>
+    </div>
+    <div class="space-y-2">
+      <button @click="simpan(false)" :disabled="busy" class="w-full py-2.5 rounded-xl bg-white shadow-card hover:bg-slate-50 text-sm font-semibold disabled:opacity-50">Simpan saja</button>
+      <button @click="batal()" class="w-full py-2 text-sm font-semibold text-slate-500 hover:text-slate-700">Batal</button>
+      <p class="text-[11px] text-slate-400 text-center">Pintasan: <kbd class="px-1 rounded bg-slate-200">Ctrl</kbd>+<kbd class="px-1 rounded bg-slate-200">S</kbd> simpan</p>
+    </div>
+   </nav>
+
+   <div class="space-y-4 min-w-0">
+    <!-- 1 Waktu & tempat -->
+    <section id="sec1" class="scroll-mt-24 bg-white rounded-2xl shadow-card p-4 lg:p-6 space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-4">
+      <h2 class="lg:col-span-2 font-bold flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-brand-100 text-brand-700 text-xs grid place-items-center">1</span>Waktu & Tempat</h2>
+      <div><label class="lbl">Hari/Tanggal <span class="text-red-500">*</span>
+        <input type="date" x-model="f.tanggal" class="field" :class="tried && !f.tanggal ? '!border-red-400' : ''"></label>
+      <p x-show="tried && !f.tanggal" class="text-xs text-red-600 mt-1">Tanggal wajib diisi agar laporan muncul di kalender.</p></div>
+      <label class="lbl">Tempat Kegiatan<input x-model="f.tempat" placeholder="mis. SD Negeri 1 Tebing Tinggi" class="field"></label>
+    </section>
+
+    <!-- 2 Identitas -->
+    <section id="sec2" class="scroll-mt-24 bg-white rounded-2xl shadow-card p-4 lg:p-6" x-data="{idOpen:false}">
+      <button @click="idOpen=!idOpen" class="w-full flex items-center justify-between">
+        <h2 class="font-bold flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-brand-100 text-brand-700 text-xs grid place-items-center">2</span>Identitas Pengawas</h2>
+        <svg class="w-5 h-5 text-slate-400 transition" :class="idOpen&&'rotate-180'" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <p x-show="!idOpen" class="text-sm text-slate-500 mt-1 text-left" x-text="f.nama+' · '+f.nip"></p>
+      <div x-show="idOpen" x-transition.opacity class="space-y-3 mt-3">
+        <template x-for="[k,l] in [['nama','Nama'],['nip','NIP'],['pangkat','Pangkat/Golongan'],['jenjang','Jenjang Kepengawasan'],['instansi','Instansi']]">
+          <label class="lbl"><span x-text="l"></span><input x-model="f[k]" class="field"></label>
+        </template>
+      </div>
+    </section>
+
+    <!-- 3 Rincian (checkbox) -->
+    <section id="sec3" class="scroll-mt-24 bg-white rounded-2xl shadow-card p-4 lg:p-6 space-y-5">
+      <h2 class="font-bold flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-brand-100 text-brand-700 text-xs grid place-items-center">3</span>Rincian Kegiatan</h2>
+      <template x-for="[k,l] in [['dasar','Dasar Kegiatan'],['jenis','Jenis Kegiatan Pendampingan'],['pendekatan','Pendekatan'],['metode','Metode'],['sasaran','Sasaran'],['teknik','Teknik']]">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="lbl" x-text="l"></span>
+            <span x-show="f[k].length" class="text-[11px] font-semibold text-brand-700 bg-brand-50 rounded-full px-2 py-0.5" x-text="f[k].length+' dipilih'"></span>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <template x-for="o in O[k]">
+              <button type="button" @click="tog(k,o)"
+                :class="f[k].includes(o) ? 'bg-brand-700 text-white border-brand-700' : 'bg-white text-slate-700 border-slate-300 hover:border-brand-300'"
+                class="border rounded-full px-3 py-1.5 text-sm flex items-center gap-1.5 transition">
+                <svg x-show="f[k].includes(o)" class="w-3.5 h-3.5 -ml-0.5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></svg>
+                <span x-text="o"></span></button>
+            </template>
+          </div>
+        </div>
+      </template>
+    </section>
+
+    <!-- 4 Uraian -->
+    <section id="sec4" class="scroll-mt-24 bg-white rounded-2xl shadow-card p-4 lg:p-6 space-y-3">
+      <h2 class="font-bold flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-brand-100 text-brand-700 text-xs grid place-items-center">4</span>Uraian</h2>
+      <label class="lbl">Deskripsi Kegiatan<textarea x-model="f.deskripsi" rows="5" placeholder="Apa yang dilakukan, siapa yang terlibat, hasil yang diperoleh…" class="field"></textarea></label>
+      <label class="lbl">Rekomendasi/Tindak Lanjut<textarea x-model="f.rekomendasi" rows="4" class="field"></textarea></label>
+      <label class="lbl">Komentar/Catatan Sasaran<textarea x-model="f.komentar" rows="3" class="field"></textarea></label>
+    </section>
+
+    <!-- 5 Foto -->
+    <section id="sec5" class="scroll-mt-24 bg-white rounded-2xl shadow-card p-4 lg:p-6">
+      <h2 class="font-bold flex items-center gap-2 mb-3"><span class="w-6 h-6 rounded-full bg-brand-100 text-brand-700 text-xs grid place-items-center">5</span>Dokumentasi</h2>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        <template x-for="(p,i) in f.foto" :key="i">
+          <div class="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
+            <img :src="p.src" class="w-full h-28 object-cover">
+            <button @click="f.foto.splice(i,1)" class="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-black/60 text-white grid place-items-center" aria-label="Hapus foto">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+            <input x-model="p.cap" placeholder="Keterangan foto" class="w-full border-0 border-t border-slate-200 px-2 py-1.5 text-xs focus:outline-none focus:bg-brand-50">
+          </div>
+        </template>
+        <label class="h-[9.25rem] rounded-xl border-2 border-dashed border-slate-300 hover:border-brand-300 hover:bg-brand-50 grid place-items-center cursor-pointer text-slate-500 transition">
+          <input type="file" accept="image/*" multiple @change="foto($event)" class="hidden">
+          <div class="text-center text-sm">
+            <template x-if="!uploading"><div>
+              <svg class="w-7 h-7 mx-auto mb-1" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M4 7h3l2-3h6l2 3h3v13H4z"/><circle cx="12" cy="13" r="4"/></svg>Tambah foto</div></template>
+            <template x-if="uploading"><div>Memproses…</div></template>
+          </div>
+        </label>
+      </div>
+    </section>
+
+    <!-- 6 TTD -->
+    <section id="sec6" class="scroll-mt-24 bg-white rounded-2xl shadow-card p-4 lg:p-6 space-y-3">
+      <h2 class="font-bold flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-brand-100 text-brand-700 text-xs grid place-items-center">6</span>Tanda Tangan</h2>
+      <div class="grid lg:grid-cols-2 gap-4">
+        <!-- 6a Yang didampingi -->
+        <div class="rounded-xl border border-slate-200 p-3 space-y-3" x-data="{k:'ttd'}">
+          <div class="text-sm font-bold text-brand-800">Yang Didampingi</div>
+          <label class="lbl">Jabatan<input x-model="f.jabatan" placeholder="Kepala Sekolah / Guru" class="field"></label>
+          <label class="lbl">Nama Penandatangan<input x-model="f.penandatangan" class="field"></label>
+          <div>
+            <span class="lbl mb-1.5">Tanda tangan</span>
+            <button x-show="!f[k]" type="button" @click="bukaTtd(k)"
+              class="w-full h-32 rounded-xl border-2 border-dashed border-slate-300 bg-[#fdfcf9] hover:border-brand-300 hover:bg-brand-50 text-slate-500 flex flex-col items-center justify-center gap-1.5 transition">
+              <svg class="w-7 h-7 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 21c3-1 5-4 6-7l8-8a2.1 2.1 0 0 1 3 3l-8 8c-3 1-6 3-7 6z"/><path d="M14 7l3 3"/><path d="M13 21h8"/></svg>
+              <span class="font-semibold text-brand-700">Ketuk untuk tanda tangan</span>
+            </button>
+            <div x-show="f[k]" class="rounded-xl border border-slate-200 bg-[#fdfcf9] p-3">
+              <div class="h-24 flex items-center justify-center"><img :src="f[k]" class="max-h-full max-w-full" alt="Tanda tangan"></div>
+              <div class="flex gap-2 mt-2 pt-2 border-t border-slate-200">
+                <button type="button" @click="bukaTtd(k)" class="flex-1 py-2 rounded-lg bg-white border border-slate-200 text-sm font-semibold hover:bg-slate-50">Ganti</button>
+                <button type="button" @click="if(confirm('Hapus tanda tangan?'))f[k]=''" class="px-3 py-2 rounded-lg text-sm font-semibold text-red-600 hover:bg-red-50">Hapus</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6b Pengawas -->
+        <div class="rounded-xl border border-slate-200 p-3 space-y-3" x-data="{k:'ttdPengawas'}">
+          <div class="text-sm font-bold text-brand-800">Pengawas</div>
+          <div class="rounded-xl bg-slate-50 px-3 py-2.5 text-sm">
+            <div class="font-semibold" x-text="f.nama"></div>
+            <div class="text-xs text-slate-500" x-text="'NIP. '+f.nip"></div>
+            <div class="text-[11px] text-slate-400 mt-1">Diambil dari Identitas Pengawas (bagian 2).</div>
+          </div>
+          <div>
+            <span class="lbl mb-1.5">Tanda tangan</span>
+            <button x-show="!f[k]" type="button" @click="bukaTtd(k)"
+              class="w-full h-32 rounded-xl border-2 border-dashed border-slate-300 bg-[#fdfcf9] hover:border-brand-300 hover:bg-brand-50 text-slate-500 flex flex-col items-center justify-center gap-1.5 transition">
+              <svg class="w-7 h-7 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 21c3-1 5-4 6-7l8-8a2.1 2.1 0 0 1 3 3l-8 8c-3 1-6 3-7 6z"/><path d="M14 7l3 3"/><path d="M13 21h8"/></svg>
+              <span class="font-semibold text-brand-700">Ketuk untuk tanda tangan</span>
+            </button>
+            <div x-show="f[k]" class="rounded-xl border border-slate-200 bg-[#fdfcf9] p-3">
+              <div class="h-24 flex items-center justify-center"><img :src="f[k]" class="max-h-full max-w-full" alt="Tanda tangan pengawas"></div>
+              <div class="flex gap-2 mt-2 pt-2 border-t border-slate-200">
+                <button type="button" @click="bukaTtd(k)" class="flex-1 py-2 rounded-lg bg-white border border-slate-200 text-sm font-semibold hover:bg-slate-50">Ganti</button>
+                <button type="button" @click="if(confirm('Hapus tanda tangan pengawas?'))f[k]=''" class="px-3 py-2 rounded-lg text-sm font-semibold text-red-600 hover:bg-red-50">Hapus</button>
+              </div>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1.5">Tanda tangan pengawas otomatis dipakai lagi di laporan berikutnya.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+   </div>
+  </div>
+
+  <div class="lg:hidden no-print fixed bottom-0 inset-x-0 z-20 bg-white/95 backdrop-blur border-t border-slate-200">
+    <div class="max-w-2xl mx-auto px-4 pt-3 safe-b flex gap-2">
+      <button @click="simpan(false)" :disabled="busy" class="flex-1 py-3 rounded-xl bg-slate-100 font-semibold disabled:opacity-50">Simpan</button>
+      <button @click="simpan(true)" :disabled="busy" class="flex-[2] py-3 rounded-xl bg-brand-700 text-white font-bold disabled:opacity-50"
+        x-text="busy ? 'Menyimpan…' : 'Simpan & Pratinjau'"></button>
+    </div>
+  </div>
+</main>
+
+<!-- ============ PRATINJAU / CETAK ============ -->
+<main x-show="view=='preview'" x-cloak class="pb-28 lg:pb-8">
+  <div class="no-print sticky top-0 z-20 bg-paper/95 backdrop-blur border-b border-slate-200 mb-4">
+    <div class="max-w-[794px] mx-auto px-4 py-3 flex items-center gap-2">
+      <button @click="go('list')" class="w-9 h-9 rounded-full hover:bg-slate-200 grid place-items-center" aria-label="Kembali">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
+      <div class="flex-1 min-w-0">
+        <div class="font-bold leading-tight">Pratinjau</div>
+        <div class="text-xs text-slate-500 truncate" x-text="f.tanggal ? tgl(f.tanggal) : ''"></div>
+      </div>
+      <button @click="go('form')" class="px-4 py-2 rounded-xl bg-white border border-slate-200 text-sm font-semibold">Edit</button>
+      <button @click="window.print()" class="px-3 lg:px-4 py-2 rounded-xl bg-white border border-slate-200 text-sm font-semibold flex items-center gap-1.5" title="Cetak ke printer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4v-7h16v7h-2M8 14h8v7H8z"/></svg><span class="hidden sm:inline">Cetak</span></button>
+      <!-- PC: tombol PDF & WhatsApp di toolbar -->
+      <button @click="unduhPdf()" :disabled="pdfBusy" class="hidden lg:flex px-4 py-2 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-sm font-bold items-center gap-1.5 disabled:opacity-60">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v3h16v-3"/></svg>Unduh PDF</button>
+      <button @click="kirimWa()" :disabled="pdfBusy" class="hidden lg:flex px-4 py-2 rounded-xl bg-[#1fa855] hover:bg-[#178a45] text-white text-sm font-bold items-center gap-1.5 disabled:opacity-60">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/></svg>Kirim ke WhatsApp</button>
+    </div>
+  </div>
+  <!-- HP: bar aksi bawah -->
+  <div class="lg:hidden no-print fixed bottom-0 inset-x-0 z-20 bg-white/95 backdrop-blur border-t border-slate-200">
+    <div class="max-w-2xl mx-auto px-4 pt-3 safe-b">
+      <div x-show="pdfStatus" class="text-[11px] text-center text-slate-500 mb-2" x-text="pdfStatus"></div>
+      <div class="flex gap-2">
+        <button @click="unduhPdf()" :disabled="pdfBusy" class="flex-1 py-3 rounded-xl bg-slate-100 font-semibold flex items-center justify-center gap-1.5 disabled:opacity-60">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v3h16v-3"/></svg>Unduh PDF</button>
+        <button @click="kirimWa()" :disabled="pdfBusy" class="flex-[1.6] py-3 rounded-xl bg-[#1fa855] active:bg-[#178a45] text-white font-bold flex items-center justify-center gap-1.5 disabled:opacity-60">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/></svg>Kirim ke WhatsApp</button>
+      </div>
+    </div>
+  </div>
+  <div class="no-print flex items-center justify-center gap-2 text-xs text-slate-500 mb-3 px-4 text-center">
+    <span class="hidden lg:inline" x-text="pdfStatus || 'PDF berukuran A4, siap dikirim atau dicetak.'"></span>
+    <span class="lg:hidden">Ketuk “Kirim ke WhatsApp” untuk membagikan PDF.</span>
+    <button x-show="docScale<1 || !fit" @click="fit=!fit;$nextTick(()=>fitDoc())" class="shrink-0 font-semibold text-brand-700 bg-white border border-slate-200 rounded-full px-2.5 py-1"
+      x-text="fit ? 'Perbesar' : 'Paskan layar'"></button>
+  </div>
+  <div id="wrap" x-ref="wrap" class="px-3" :class="fit ? 'overflow-hidden' : 'overflow-x-auto'">
+    <div id="doc" x-ref="doc" class="mx-auto shadow-card">
+     <table class="pg">
+      <thead><tr><td><div class="pg-sp"></div></td></tr></thead>
+      <tfoot><tr><td><div class="pg-sp"></div></td></tr></tfoot>
+      <tbody><tr><td>
+      <h1>LAPORAN KEGIATAN PENGAWAS SEKOLAH</h1>
+      <table class="lap">
+        <colgroup><col style="width:21%"><col style="width:3%"><col></colgroup>
+        <tr><td>Identitas</td><td class="c">:</td><td>
+          Nama/NIP: <span x-text="f.nama"></span>/<span x-text="f.nip"></span><br>
+          Pangkat/Golongan: <span x-text="f.pangkat"></span><br>
+          Jenjang Kepengawasan: <span x-text="f.jenjang"></span><br>
+          Instansi: <span x-text="f.instansi"></span></td></tr>
+        <template x-for="r in rows" :key="r[0]">
+          <tr><td x-text="r[0]"></td><td class="c">:</td>
+            <td><template x-if="r[1]=='chk'"><div class="opts"><template x-for="o in O[r[2]]"><span><span class="bx" x-text="box(r[2],o)"></span>&nbsp;<span x-text="o"></span></span></template></div></template>
+                <template x-if="r[1]=='txt'"><div class="pre" x-text="f[r[2]]"></div></template>
+                <template x-if="r[1]=='tgl'"><span x-text="f.tanggal ? tgl(f.tanggal) : ''"></span></template></td></tr>
+        </template>
+        <tr><td>Dokumentasi</td><td class="c">:</td><td>
+          <table class="foto">
+            <template x-for="(row,ri) in fotoRows" :key="ri">
+              <tr><template x-for="ci in [0,1]" :key="ci"><td>
+                <template x-if="row[ci]"><div><img :src="row[ci].src"><div class="cap" x-show="row[ci].cap" x-text="row[ci].cap"></div></div></template>
+              </td></template></tr>
+            </template>
+            <template x-if="!fotoRows.length"><tr><td class="kosong"></td><td class="kosong"></td></tr></template>
+          </table></td></tr>
+        <tr><td>Komentar/Catatan Sasaran</td><td class="c">:</td><td><div class="pre" x-text="f.komentar"></div></td></tr>
+        <tr><td>Tandatangan yang Didampingi</td><td colspan="2" class="ttd">
+          <div x-text="f.jabatan || 'Kepala Sekolah/Guru/TAS/Pengurus/Panitia'"></div>
+          <div class="ttd-img"><img x-show="f.ttd" :src="f.ttd"></div>
+          <div x-show="f.penandatangan" class="nama" x-text="f.penandatangan"></div>
+          <div x-show="!f.penandatangan">………………………………………..</div></td></tr>
+        <tr><td>Tandatangan Pengawas</td><td colspan="2" class="ttd">
+          <div>Pengawas Sekolah</div>
+          <div class="ttd-img"><img x-show="f.ttdPengawas" :src="f.ttdPengawas"></div>
+          <div class="nama" x-text="f.nama || '………………………………………..'"></div>
+          <div x-show="f.nip" x-text="'NIP. '+f.nip"></div></td></tr>
+      </table>
+      </td></tr></tbody>
+     </table>
+    </div>
+  </div>
+</main>
+
+<!-- ============ LAYAR TANDA TANGAN ============ -->
+<div x-show="sig" x-cloak x-transition.opacity class="no-print fixed inset-0 z-[60] bg-black/50 lg:grid lg:place-items-center lg:p-6">
+  <div class="bg-white h-full w-full flex flex-col lg:h-auto lg:max-w-2xl lg:rounded-2xl lg:shadow-2xl overflow-hidden"
+    @keydown.escape.window="sig && tutupTtd()">
+    <header class="flex items-center gap-3 px-4 py-3 border-b border-slate-200" style="padding-top:max(.75rem,env(safe-area-inset-top))">
+      <button @click="tutupTtd()" class="w-9 h-9 rounded-full hover:bg-slate-100 grid place-items-center" aria-label="Tutup">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      <div class="flex-1 min-w-0">
+        <div class="font-bold leading-tight">Tanda Tangan</div>
+        <div class="text-xs text-slate-500 truncate" x-text="sigTarget=='ttdPengawas' ? 'Pengawas · '+f.nama : ([f.jabatan,f.penandatangan].filter(Boolean).join(' · ') || 'Yang didampingi')"></div>
+      </div>
+      <button @click="ulangTtd()" :disabled="!strokes.length" class="px-3 py-2 rounded-lg text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-30">Ulangi</button>
+    </header>
+
+    <div class="flex-1 lg:flex-none p-3 lg:p-5 bg-slate-50 flex flex-col min-h-0">
+      <div x-ref="sigBox" class="relative flex-1 min-h-[220px] lg:h-72 lg:flex-none rounded-xl bg-white border-2 border-dashed border-slate-300 overflow-hidden">
+        <canvas x-ref="sigCanvas" class="absolute inset-0 w-full h-full" style="touch-action:none"></canvas>
+        <div x-show="!strokes.length" class="pointer-events-none absolute inset-0 grid place-items-center text-center px-6">
+          <div class="text-slate-300">
+            <div class="text-lg font-semibold">Tanda tangan di sini</div>
+            <div class="text-xs mt-1">Gunakan jari atau stylus</div>
+          </div>
+        </div>
+        <div class="pointer-events-none absolute left-[8%] right-[8%] bottom-[22%] border-b-2 border-slate-200"></div>
+        <div class="pointer-events-none absolute left-[8%] bottom-[22%] mb-1 text-slate-300 text-lg">×</div>
+      </div>
+      <p x-show="!isDesk" class="text-[11px] text-slate-400 text-center mt-2">Tip: putar HP ke posisi mendatar agar area tanda tangan lebih lebar.</p>
+      <p x-show="f.ttd && !strokes.length" class="text-[11px] text-slate-500 text-center mt-1">Tanda tangan baru akan menggantikan yang lama.</p>
+    </div>
+
+    <footer class="flex gap-2 px-4 pt-3 border-t border-slate-200 safe-b lg:pb-3">
+      <button @click="tutupTtd()" class="flex-1 py-3 rounded-xl bg-slate-100 font-semibold">Batal</button>
+      <button @click="simpanTtd()" :disabled="!strokes.length" class="flex-[2] py-3 rounded-xl bg-brand-700 text-white font-bold disabled:opacity-40">Gunakan Tanda Tangan</button>
+    </footer>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="no-print fixed bottom-24 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
+  <div x-show="toast" x-transition.opacity x-cloak class="bg-ink text-white text-sm font-medium rounded-xl px-4 py-2.5 shadow-lg" x-text="toast"></div>
+</div>
+
+<script>
+const O={
+ dasar:['SK Pembagian Tugas Kepengawasan Tahun 2026','SPT','dll'],
+ jenis:['Pembinaan','Pemantauan/monitoring','Evaluasi Kinerja','Pembimbingan & Pelatihan Profesional','dll'],
+ pendekatan:['Individual','Kelompok','Klasikal','dll'],
+ metode:['Coaching','Mentoring','Training','Fasilitasi','Konsultasi','Supervisi Klinis','Observasi','Analisis Dokumen','Angket','Wawancara (Interview)','Analisis Data Rapor Pendidikan','Checklist Monitoring (Daftar Cek)','Pendampingan Khusus'],
+ sasaran:['Kepala Sekolah','Guru','TAS','Komunitas Belajar','Peer Review','dll'],
+ teknik:['Luring','Daring']};
+const blank=()=>({id:null,nama:'Ulil Azmi, S.Pd., M.Pd',nip:'197010021994121001',pangkat:'Pembina Utama Muda/IV-c',jenjang:'TK/SD/SMP',instansi:'Dinas Pendidikan dan Kebudayaan Kota Tebing Tinggi',
+ dasar:[],tanggal:'',tempat:'',jenis:[],pendekatan:[],metode:[],sasaran:[],teknik:[],deskripsi:'',rekomendasi:'',foto:[],komentar:'',jabatan:'',penandatangan:'',ttd:'',ttdPengawas:''});
+const pad2=n=>String(n).padStart(2,'0');
+const ymd=d=>d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function api(url,opt){
+  const r=await fetch(url,opt);
+  if(!r.ok){let m=r.statusText;try{m=(await r.json()).error||m}catch{}throw new Error(m)}
+  return r.json();
+}
+const store={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
+
+function app(){const now=new Date();return{
+ view:'list',mode:store.get('lap.mode')||'kalender',items:[],f:blank(),O,pad2,
+ isDesk:matchMedia('(min-width:1024px)').matches,fit:true,docScale:1,sig:false,strokes:[],sigTarget:'ttd',ttdPengawasTerakhir:null,pdfBusy:false,pdfStatus:'',
+ loading:true,err:'',busy:false,uploading:false,tried:false,toast:'',q:'',snap:'',
+ todayKey:ymd(now),sel:ymd(now),cy:now.getFullYear(),cm:now.getMonth(),
+ rows:[['Dasar Kegiatan','chk','dasar'],['Hari/Tanggal','tgl'],['Tempat Kegiatan','txt','tempat'],['Jenis Kegiatan Pendampingan','chk','jenis'],['Pendekatan','chk','pendekatan'],['Metode','chk','metode'],['Sasaran','chk','sasaran'],['Teknik','chk','teknik'],['Deskripsi Kegiatan','txt','deskripsi'],['Rekomendasi/Tindak lanjut','txt','rekomendasi']],
+
+ async init(){
+  window.addEventListener('popstate',e=>{if(this.sig)this.tutupTtd(true);this.view=(e.state&&e.state.v)||'list'});
+  window.addEventListener('beforeunload',e=>{if(this.view=='form'&&this.dirty()){e.preventDefault();e.returnValue=''}});
+  matchMedia('(min-width:1024px)').addEventListener('change',e=>{this.isDesk=e.matches});
+  window.addEventListener('keydown',e=>this.key(e));
+  // Pratinjau: perkecil dokumen A4 agar pas di layar HP
+  this.$watch('view',v=>{if(v=='preview'){this.$nextTick(()=>this.fitDoc());
+    // siapkan PDF di latar belakang agar tombol "Kirim ke WhatsApp" bisa langsung membuka menu bagikan
+    clearTimeout(this._pdfT);this._pdfT=setTimeout(()=>{if(this.view=='preview')this.siapkanPdf().catch(()=>{})},700)}});
+  const ro=new ResizeObserver(()=>this.fitDoc());ro.observe(this.$refs.wrap);ro.observe(this.$refs.doc);
+  await this.load();
+ },
+ save(){store.set('lap.mode',this.mode)},
+ // ---- PDF A4 & kirim ke WhatsApp ----
+ // PDF dibuat di perangkat: salinan dokumen digambar dengan mesin render browser (html-to-image),
+ // lalu dipotong per halaman A4 (jsPDF) hanya di batas baris tabel agar tidak ada baris yang terbelah.
+ muatScript(src){return new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=()=>no(new Error('Gagal memuat pustaka PDF (cek koneksi internet)'));document.head.appendChild(s)})},
+ async muatLibPdf(){
+  if(!window.htmlToImage)await this.muatScript('https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js');
+  if(!window.jspdf)await this.muatScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+ },
+ namaPdf(){
+  const t=(this.f.tempat||'Laporan').replace(/[^\w\- ]+/g,'').trim().replace(/\s+/g,'-')||'Laporan';
+  return `Laporan-Kegiatan-${t}${this.f.tanggal?'-'+this.f.tanggal:''}.pdf`;
+ },
+ async siapkanPdf(){
+  const key=JSON.stringify(this.f);
+  if(this._pdf&&this._pdf.key===key)return this._pdf.blob;
+  if(this._pdfJob&&this._pdfJob.key===key)return this._pdfJob.p;
+  const p=(async()=>{
+   this.pdfStatus='Menyiapkan PDF…';
+   await this.muatLibPdf();
+   const blob=await this.renderPdf();
+   this._pdf={key,blob};this.pdfStatus='';
+   return blob;
+  })();
+  this._pdfJob={key,p};
+  try{return await p}catch(e){this.pdfStatus='';throw e}finally{if(this._pdfJob&&this._pdfJob.p===p)this._pdfJob=null}
+ },
+ async renderPdf(){
+  // 1) salinan bersih dokumen di luar layar, ukuran A4 asli (tanpa skala HP)
+  const box=document.createElement('div');box.setAttribute('x-ignore','');
+  box.style.cssText='position:fixed;left:-10000px;top:0;width:210mm;pointer-events:none;z-index:-1';
+  const el=this.$refs.doc.cloneNode(true);el.removeAttribute('id');el.removeAttribute('x-ref');
+  el.id='doc';box.id='pdf-box';
+  el.querySelectorAll('template').forEach(t=>t.remove());
+  // gambar kosong/tersembunyi (mis. tanda tangan belum diisi) membuat html-to-image gagal → buang
+  el.querySelectorAll('img').forEach(i=>{if(!i.getAttribute('src')||i.style.display==='none')i.remove()});
+  for(const n of [el,...el.querySelectorAll('*')])for(const a of [...n.attributes])if(/^(x-|:|@)/.test(a.name))n.removeAttribute(a.name);
+  Object.assign(el.style,{transform:'none',boxShadow:'none',minHeight:'0',margin:'0',marginLeft:'0'});
+  box.appendChild(el);document.body.appendChild(box);
+  try{
+   await Promise.all([...el.querySelectorAll('img')].map(i=>i.complete?0:new Promise(r=>{i.onload=i.onerror=r})));
+   const r0=el.getBoundingClientRect(),top=r0.top,left=r0.left,W=el.offsetWidth,Ht=el.offsetHeight;
+   const rows=[...el.querySelectorAll('.lap>tbody>tr')].map(r=>{const b=r.getBoundingClientRect();return[b.top-top,b.bottom-top]});
+   // Foto & tanda tangan TIDAK ikut digambar lewat SVG (Safari iPhone / sebagian Android tidak menampilkan
+   // gambar di dalam SVG foreignObject). Catat posisinya, kosongkan, lalu gambar langsung ke kanvas.
+   const BLANK='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+   const gambar=[...el.querySelectorAll('img')].map(i=>{const b=i.getBoundingClientRect();
+    const g={src:i.getAttribute('src'),x:b.left-left,y:b.top-top,w:b.width,h:b.height,cover:!!i.closest('.foto')};
+    Object.assign(i.style,{width:b.width+'px',height:b.height+'px',maxWidth:'none',maxHeight:'none'});i.src=BLANK;return g}).filter(g=>g.w&&g.h);
+   // batasi ukuran kanvas (iPhone maks ±16 juta piksel)
+   const ratio=Math.max(1,Math.min(2.5,Math.sqrt(15e6/(W*Ht))));
+   const opt={pixelRatio:ratio,backgroundColor:'#ffffff',skipFonts:true,cacheBust:false,width:W,height:Ht};
+   const canvas=await htmlToImage.toCanvas(el,opt);
+   const ctx=canvas.getContext('2d'),kk=canvas.width/W;
+   for(const g of gambar){
+    const im=new Image();im.src=g.src;
+    try{await im.decode()}catch{await new Promise(r=>{if(im.complete)r();else{im.onload=im.onerror=r}})}
+    if(!im.naturalWidth)continue;
+    let sx=0,sy=0,sw=im.naturalWidth,sh=im.naturalHeight;
+    if(g.cover){const s=Math.max(g.w/sw,g.h/sh),cw=g.w/s,ch=g.h/s;sx=(sw-cw)/2;sy=(sh-ch)/2;sw=cw;sh=ch} // object-fit: cover
+    ctx.drawImage(im,sx,sy,sw,sh,g.x*kk,g.y*kk,g.w*kk,g.h*kk);
+   }
+   // 2) potong per halaman A4
+   const{jsPDF}=window.jspdf,pdf=new jsPDF({unit:'mm',format:'a4',orientation:'portrait',compress:true});
+   const pxmm=W/210,k=canvas.width/W,M=10*pxmm,H=297*pxmm,tops=rows.map(r=>r[0]);
+   const end=Math.min(Ht,rows[rows.length-1][1]+M);
+   let s=0,first=true;
+   while(s<end-2){
+    const avail=first?H-M:H-2*M;let e=s+avail;
+    if(e<end){const c=tops.filter(t=>t>s+2&&t<=e);if(c.length)e=Math.max(...c)}else e=end;
+    const sy=Math.floor(s*k),sh=Math.min(canvas.height-sy,Math.ceil((e-s)*k)+Math.ceil(k));
+    const cv=document.createElement('canvas');cv.width=canvas.width;cv.height=sh;
+    const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,cv.width,sh);x.drawImage(canvas,0,sy,canvas.width,sh,0,0,canvas.width,sh);
+    if(!first)pdf.addPage();
+    pdf.addImage(cv.toDataURL('image/jpeg',0.92),'JPEG',0,first?0:10,210,sh/k/pxmm);
+    s=e;first=false;
+   }
+   pdf.setProperties({title:'Laporan Kegiatan Pengawas Sekolah'});
+   return pdf.output('blob');
+  }finally{box.remove()}
+ },
+ simpanFile(blob,nama){
+  const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=nama;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(u),30000);
+ },
+ async unduhPdf(){
+  if(this.pdfBusy)return;this.pdfBusy=true;
+  try{this.simpanFile(await this.siapkanPdf(),this.namaPdf());this.notify('PDF diunduh')}
+  catch(e){this.notify('Gagal membuat PDF: '+e.message)}
+  this.pdfBusy=false;
+ },
+ async kirimWa(){
+  if(this.pdfBusy)return;
+  const teks=`Laporan Kegiatan Pengawas Sekolah\n${this.tgl(this.f.tanggal)}${this.f.tempat?'\n'+this.f.tempat:''}`;
+  const siap=this._pdf&&this._pdf.key===JSON.stringify(this.f);
+  this.pdfBusy=true;let blob;
+  try{blob=await this.siapkanPdf()}catch(e){this.pdfBusy=false;this.notify('Gagal membuat PDF: '+e.message);return}
+  this.pdfBusy=false;
+  const file=new File([blob],this.namaPdf(),{type:'application/pdf'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+   try{await navigator.share({files:[file],title:file.name,text:teks});return}
+   catch(e){
+    if(e.name==='AbortError')return; // pengguna menutup menu bagikan
+    if(!siap&&e.name==='NotAllowedError'){this.notify('PDF sudah siap — ketuk “Kirim ke WhatsApp” sekali lagi');return}
+   }
+  }
+  // Cadangan (mis. browser tanpa fitur bagikan file / bukan HTTPS): unduh PDF lalu buka WhatsApp
+  this.simpanFile(blob,file.name);
+  this.notify('PDF diunduh — lampirkan file di WhatsApp');
+  setTimeout(()=>window.open('https://wa.me/?text='+encodeURIComponent(teks+'\n(PDF terlampir)'),'_blank'),600);
+ },
+ fitDoc(){
+  const w=this.$refs.wrap,d=this.$refs.doc;if(!w||!d||this.view!='preview'||!d.offsetWidth)return;
+  const cs=getComputedStyle(w),avail=w.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
+  const need=Math.min(1,avail/d.offsetWidth);this.docScale=need;
+  const s=this.fit?need:1;
+  if(s<1){d.style.transformOrigin='top left';d.style.transform=`scale(${s})`;d.style.marginLeft='0';w.style.height=Math.ceil(d.offsetHeight*s)+'px'}
+  else{d.style.transform='';d.style.marginLeft='';w.style.height=''}
+ },
+ setMode(m){this.mode=m;this.save();if(m=='semua'&&this.isDesk)this.$nextTick(()=>this.$refs.cari.focus())},
+ key(e){
+  const t=e.target,typing=t.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName);
+  if(this.view=='form'&&(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()=='s'){e.preventDefault();this.simpan(false);return}
+  if(this.view=='preview'&&(e.ctrlKey||e.metaKey)&&e.key.toLowerCase()=='p')return;
+  if(this.view!='list'||typing||e.ctrlKey||e.metaKey||e.altKey)return;
+  if(e.key=='n'||e.key=='N'){e.preventDefault();this.baru(this.mode=='kalender'?this.sel:'')}
+  else if(e.key=='/'){e.preventDefault();this.setMode('semua')}
+  else if(e.key=='ArrowLeft'){this.shift(-1)}
+  else if(e.key=='ArrowRight'){this.shift(1)}
+ },
+ async load(){
+  this.err='';
+  try{this.items=await api('/api/laporan')}catch(e){this.err=e.message}
+  this.loading=false;
+ },
+
+ // ---- navigasi ----
+ go(v){
+  if(v=='list'){ if(history.state&&history.state.v) history.back(); this.view='list'; }
+  else { (this.view=='list'?history.pushState:history.replaceState).call(history,{v},''); this.view=v; }
+  window.scrollTo(0,0);
+ },
+ notify(m){this.toast=m;clearTimeout(this._t);this._t=setTimeout(()=>this.toast='',2200)},
+
+ // ---- data per tanggal ----
+ get byDate(){const m={};for(const i of this.items)if(i.tanggal)(m[i.tanggal]||=[]).push(i);return m},
+ countMonth(ym){return this.items.filter(i=>i.tanggal&&i.tanggal.startsWith(ym)).length},
+ get monthName(){return new Date(this.cy,this.cm,1).toLocaleDateString('id-ID',{month:'long',year:'numeric'})},
+ get cells(){
+  const first=new Date(this.cy,this.cm,1),off=(first.getDay()+6)%7,n=new Date(this.cy,this.cm+1,0).getDate(),a=[];
+  for(let i=0;i<off;i++)a.push(null);
+  for(let d=1;d<=n;d++)a.push(this.cy+'-'+pad2(this.cm+1)+'-'+pad2(d));
+  return a;
+ },
+ shift(n){const d=new Date(this.cy,this.cm+n,1);this.cy=d.getFullYear();this.cm=d.getMonth()},
+ pick(k){this.sel=k;const[y,m]=k.split('-');this.cy=+y;this.cm=+m-1},
+ get groups(){
+  const s=this.q.trim().toLowerCase(),m=new Map();
+  for(const i of this.items){
+   if(s&&![i.tempat,i.penandatangan,...(i.jenis||[]),...(i.sasaran||[])].join(' ').toLowerCase().includes(s))continue;
+   const k=i.tanggal||'-';if(!m.has(k))m.set(k,[]);m.get(k).push(i);
+  }
+  return[...m].map(([key,list])=>({key,list}));
+ },
+ card(i){
+  const chip=(t,c)=>`<span class="text-[11px] font-semibold rounded-full px-2 py-0.5 ${c}">${esc(t)}</span>`;
+  const tags=[...(i.jenis||[]).map(t=>chip(t,'bg-brand-50 text-brand-700')),...(i.sasaran||[]).map(t=>chip(t,'bg-orange-50 text-orange-700')),...(i.teknik||[]).map(t=>chip(t,'bg-slate-100 text-slate-600'))].join('');
+  return `<div class="flex items-start gap-3">
+   <div class="shrink-0 w-12 text-center rounded-xl bg-brand-800 text-white py-1.5">
+    <div class="text-lg font-extrabold leading-none">${i.tanggal?+i.tanggal.slice(8):'–'}</div>
+    <div class="text-[10px] uppercase tracking-wide text-brand-200">${i.tanggal?new Date(i.tanggal+'T00:00').toLocaleDateString('id-ID',{month:'short'}):''}</div></div>
+   <div class="min-w-0 flex-1">
+    <div class="font-bold truncate">${esc(i.tempat)||'<span class="text-slate-400 font-medium">Tempat belum diisi</span>'}</div>
+    <div class="text-xs text-slate-500 mt-0.5">${i.tanggal?esc(this.tgl(i.tanggal)):'Tanpa tanggal'}${i.foto?` · ${i.foto} foto`:''}${i.penandatangan?` · ${esc(i.penandatangan)}`:''}</div>
+    ${tags?`<div class="flex flex-wrap gap-1 mt-2">${tags}</div>`:''}
+   </div></div>`;
+ },
+ get shown(){return this.mode=='kalender'?(this.byDate[this.sel]?[{key:this.sel,list:this.byDate[this.sel]}]:[]):this.groups},
+ get shownCount(){return this.shown.reduce((n,g)=>n+g.list.length,0)},
+ get monthDays(){const ym=this.cy+'-'+pad2(this.cm+1);return Object.keys(this.byDate).filter(k=>k.startsWith(ym)).sort()},
+ tglPendek(d){return new Date(d+'T00:00').toLocaleDateString('id-ID',{weekday:'short',day:'numeric',month:'short'})},
+ tgl(d){return d?new Date(d+'T00:00').toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):''},
+
+ // ---- CRUD ----
+ open(f,v){f={...blank(),...f};for(const k in O)if(!Array.isArray(f[k]))f[k]=[];if(!Array.isArray(f.foto))f.foto=[];this.f=f;this.snap=JSON.stringify(f);this.tried=false;this.go(v)},
+ async baru(tanggal){
+  const f=blank();f.tanggal=tanggal||'';
+  // pakai lagi tanda tangan pengawas terakhir agar tidak perlu tanda tangan ulang
+  if(this.ttdPengawasTerakhir===null){try{this.ttdPengawasTerakhir=(await api('/api/ttd-pengawas')).ttd||''}catch{this.ttdPengawasTerakhir=''}}
+  f.ttdPengawas=this.ttdPengawasTerakhir||'';
+  this.open(f,'form');
+ },
+ async buka(id,v){try{this.open(await api('/api/laporan/'+id),v)}catch(e){this.notify('Gagal membuka: '+e.message)}},
+ async duplikat(id){
+  try{const s=await api('/api/laporan/'+id);
+   const f={...blank(),...s,id:null,tanggal:'',foto:[],ttd:'',komentar:''};
+   this.open(f,'form');this.notify('Disalin — isi tanggal & foto baru');
+  }catch(e){this.notify('Gagal menyalin: '+e.message)}
+ },
+ dirty(){return JSON.stringify(this.f)!==this.snap},
+ batal(){if(!this.dirty()||confirm('Perubahan belum disimpan. Tinggalkan halaman ini?'))this.go('list')},
+ async simpan(preview){
+  this.tried=true;
+  if(!this.f.tanggal){window.scrollTo({top:0,behavior:'smooth'});this.notify('Isi tanggal terlebih dahulu');return}
+  this.busy=true;
+  try{
+   const edit=!!this.f.id;
+   const r=await api('/api/laporan'+(edit?'/'+this.f.id:''),{method:edit?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(this.f)});
+   if(!edit)this.f.id=r.id;
+   this.snap=JSON.stringify(this.f);
+   await this.load();this.pick(this.f.tanggal);
+   this.notify('Laporan tersimpan');
+   if(preview)this.go('preview');
+  }catch(e){this.notify('Gagal menyimpan: '+e.message)}
+  this.busy=false;
+ },
+ async hapus(i){
+  if(!confirm(`Hapus laporan ${i.tempat||''} (${i.tanggal?this.tgl(i.tanggal):'tanpa tanggal'})?`))return;
+  try{await api('/api/laporan/'+i.id,{method:'DELETE'});await this.load();this.notify('Laporan dihapus')}
+  catch(e){this.notify('Gagal menghapus: '+e.message)}
+ },
+ get steps(){const f=this.f;return[
+  {n:1,label:'Waktu & Tempat',done:!!(f.tanggal&&f.tempat)},
+  {n:2,label:'Identitas',done:!!(f.nama&&f.nip)},
+  {n:3,label:'Rincian Kegiatan',done:['dasar','jenis','pendekatan','metode','sasaran','teknik'].every(k=>f[k].length)},
+  {n:4,label:'Uraian',done:!!(f.deskripsi&&f.rekomendasi)},
+  {n:5,label:'Dokumentasi',done:f.foto.length>0},
+  {n:6,label:'Tanda Tangan',done:!!(f.ttd&&f.ttdPengawas)}]},
+ get progress(){
+  const f=this.f,c=[f.tanggal,f.tempat,f.dasar.length,f.jenis.length,f.pendekatan.length,f.metode.length,f.sasaran.length,f.teknik.length,f.deskripsi,f.rekomendasi,f.foto.length,f.ttd,f.ttdPengawas];
+  return Math.round(c.filter(Boolean).length/c.length*100);
+ },
+ get fotoRows(){const a=this.f.foto||[],r=[];for(let i=0;i<a.length;i+=2)r.push(a.slice(i,i+2));return r},
+ tog(k,v){const a=this.f[k],i=a.indexOf(v);i<0?a.push(v):a.splice(i,1)},
+ box(k,v){return this.f[k].includes(v)?'☒':'☐'},
+
+ // ---- foto & ttd ----
+ kecil(file){return new Promise(r=>{const i=new Image();i.onload=()=>{const s=Math.min(1,800/i.width),c=document.createElement('canvas');c.width=i.width*s;c.height=i.height*s;c.getContext('2d').drawImage(i,0,0,c.width,c.height);URL.revokeObjectURL(i.src);r(c.toDataURL('image/jpeg',.7))};i.src=URL.createObjectURL(file)})},
+ async foto(e){this.uploading=true;for(const x of e.target.files)this.f.foto.push({cap:'',src:await this.kecil(x)});e.target.value='';this.uploading=false},
+ // ---- tanda tangan (layar khusus) ----
+ // Goresan disimpan sebagai titik ternormalisasi (dibagi lebar kanvas),
+ // sehingga tetap utuh saat layar diputar / ukuran berubah.
+ bukaTtd(k){
+  this.sigTarget=k||'ttd';this.strokes=[];this.sig=true;document.body.style.overflow='hidden';
+  history.pushState({v:this.view,sig:1},'');
+  this.$nextTick(()=>{this.siapkanKanvas();if(!this._sigRO){this._sigRO=new ResizeObserver(()=>this.sig&&this.siapkanKanvas());this._sigRO.observe(this.$refs.sigBox)}});
+ },
+ tutupTtd(fromPop){
+  if(!this.sig)return;
+  if(this.strokes.length&&!fromPop&&!confirm('Buang tanda tangan yang belum disimpan?'))return;
+  this.sig=false;this.strokes=[];document.body.style.overflow='';
+  if(!fromPop&&history.state&&history.state.sig)history.back();
+ },
+ ulangTtd(){this.strokes=[];this.gambar()},
+ simpanTtd(){
+  if(!this.strokes.length)return;
+  const img=this.eksporTtd();this.f[this.sigTarget]=img;
+  if(this.sigTarget=='ttdPengawas')this.ttdPengawasTerakhir=img;
+  this.strokes=[];this.tutupTtd();this.notify('Tanda tangan disimpan');
+ },
+ siapkanKanvas(){
+  const c=this.$refs.sigCanvas,box=this.$refs.sigBox,w=box.clientWidth,h=box.clientHeight;if(!w||!h)return;
+  const dpr=window.devicePixelRatio||1;c.width=w*dpr;c.height=h*dpr;
+  const x=c.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);
+  this.gambar();
+  if(c._siap)return;c._siap=true;
+  let cur=null;
+  const pt=e=>{const r=c.getBoundingClientRect();return[(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.width,e.pressure||.5]};
+  c.addEventListener('pointerdown',e=>{e.preventDefault();c.setPointerCapture(e.pointerId);cur=[pt(e)];this.strokes.push(cur);this.gambar()});
+  c.addEventListener('pointermove',e=>{if(!cur)return;e.preventDefault();
+   const ev=e.getCoalescedEvents?e.getCoalescedEvents():[e];for(const q of(ev.length?ev:[e]))cur.push(pt(q));this.gambar()});
+  const end=()=>{cur=null};
+  c.addEventListener('pointerup',end);c.addEventListener('pointercancel',end);c.addEventListener('pointerleave',end);
+ },
+ garis(x,strokes,s,ox=0,oy=0){
+  x.lineCap='round';x.lineJoin='round';x.strokeStyle='#0b1f3a';x.fillStyle='#0b1f3a';
+  for(const st of strokes){
+   const P=st.map(([a,b])=>[a*s-ox,b*s-oy]);
+   x.lineWidth=Math.max(2,s*0.006);
+   if(P.length==1){x.beginPath();x.arc(P[0][0],P[0][1],x.lineWidth/2,0,7);x.fill();continue}
+   x.beginPath();x.moveTo(...P[0]);
+   for(let i=1;i<P.length-1;i++){const mx=(P[i][0]+P[i+1][0])/2,my=(P[i][1]+P[i+1][1])/2;x.quadraticCurveTo(P[i][0],P[i][1],mx,my)}
+   x.lineTo(...P[P.length-1]);x.stroke();
+  }
+ },
+ gambar(){
+  const c=this.$refs.sigCanvas;if(!c)return;const x=c.getContext('2d'),w=c.clientWidth;
+  x.clearRect(0,0,c.width,c.height);this.garis(x,this.strokes,w);
+ },
+ eksporTtd(){
+  // potong ke area goresan saja + latar transparan, resolusi tinggi agar tajam saat dicetak
+  const W=900,pts=this.strokes.flat();let a=1e9,b=1e9,c=-1e9,d=-1e9;
+  for(const[p,q]of pts){a=Math.min(a,p);b=Math.min(b,q);c=Math.max(c,p);d=Math.max(d,q)}
+  const pad=0.02,ox=(a-pad)*W,oy=(b-pad)*W,cw=Math.max(40,(c-a+2*pad)*W),ch=Math.max(40,(d-b+2*pad)*W);
+  const cv=document.createElement('canvas');cv.width=Math.ceil(cw);cv.height=Math.ceil(ch);
+  this.garis(cv.getContext('2d'),this.strokes,W,ox,oy);
+  return cv.toDataURL('image/png');
+ }
+}}
+</script>
+</body></html>
