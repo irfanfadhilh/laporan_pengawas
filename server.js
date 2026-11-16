@@ -3,7 +3,7 @@ const express = require('express'), { Pool } = require('pg');
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const app = express();
 app.use(express.json({ limit: '25mb' }));
-app.use(express.static('public'));
+app.use(express.static(require('path').join(__dirname, 'public')));
 const q = (s, p) => pool.query(s, p).then(r => r.rows);
 const wrap = fn => (req, res) => fn(req, res).catch(e => { console.error(e); res.status(500).json({ error: e.message }); });
 
@@ -36,4 +36,9 @@ app.delete('/api/laporan/:id', wrap(async (req, res) => {
   await q('delete from laporan where id=$1', [req.params.id]);
   res.json({ ok: true });
 }));
-app.listen(process.env.PORT || 3000, () => console.log('Jalan di http://localhost:' + (process.env.PORT || 3000)));
+// Lokal: node server.js. Di Vercel: app diekspor sebagai serverless function.
+if (require.main === module) {
+  const port = process.env.PORT || 3000;
+  app.listen(port, () => console.log('Jalan di http://localhost:' + port));
+}
+module.exports = app;
